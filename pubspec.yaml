@@ -5,15 +5,20 @@ version: 2.0.0
 author: Instabug <support@instabug.com>
 homepage: https://github.com/Instabug/Instabug-Flutter#readme 
 
+publish_to: none #wip
+
 environment:
-  sdk: ">=2.11.0 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
   dio: '^4.0.0'
-  instabug_flutter: '^9.1.9'
+  instabug_flutter: 
+    git:
+      url: https://github.com/Danx0/Instabug-Flutter.git
+      ref: master
 dev_dependencies:
   flutter_test:
     sdk: flutter

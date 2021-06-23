@@ -3,13 +3,11 @@ import 'package:instabug_flutter/models/network_data.dart';
 import 'package:instabug_flutter/NetworkLogger.dart';
 
 class InstabugDioInterceptor extends Interceptor {
-  static final Map<int, NetworkData> _requests = <int, NetworkData>{};
+  static final Map<int, DateTime> _requests = <int, DateTime>{};
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final NetworkData data = NetworkData();
-    data.startTime = DateTime.now();
-    _requests[options.hashCode] = data;
+    _requests[options.hashCode] = DateTime.now();
     handler.next(options);
   }
 
@@ -21,11 +19,13 @@ class InstabugDioInterceptor extends Interceptor {
 
   @override
   void onError(DioError err, ErrorInterceptorHandler handler) {
-    NetworkLogger.networkLog(_map(err.response));
-    handler.next(err);
+    if (err.response != null) {
+      NetworkLogger.networkLog(_map(err.response!));
+      handler.next(err);
+    }
   }
 
-  static NetworkData _getRequestData(int requestHashCode) {
+  static DateTime? _getRequestTime(int requestHashCode) {
     if (_requests[requestHashCode] != null) {
       return _requests.remove(requestHashCode);
     }
@@ -33,19 +33,27 @@ class InstabugDioInterceptor extends Interceptor {
   }
 
   NetworkData _map(Response response) {
-    final NetworkData data = _getRequestData(response.requestOptions.hashCode);
-    data.endTime = DateTime.now();
-    data.duration = data.endTime.millisecondsSinceEpoch - data.startTime.millisecondsSinceEpoch;
+    final DateTime requestTime =
+        _getRequestTime(response.requestOptions.hashCode) ?? DateTime.now();
+    final DateTime responseTime = DateTime.now();
     final Map<String, dynamic> responseHeaders = <String, dynamic>{};
-    response.headers.forEach((String name, dynamic value) => responseHeaders[name] = value);
-    data.url = response.requestOptions.uri.toString();
-    data.method = response.requestOptions.method;
-    data.requestBody = response.requestOptions.data;
-    data.requestHeaders = response.requestOptions.headers;
-    data.contentType = response.requestOptions.contentType.toString();
-    data.status = response.statusCode;
-    data.responseBody = response.data;
-    data.responseHeaders = responseHeaders;
+    response.headers
+        .forEach((String name, dynamic value) => responseHeaders[name] = value);
+
+    final NetworkData data = NetworkData(
+      startTime: requestTime,
+      endTime: responseTime,
+      duration: responseTime.millisecondsSinceEpoch -
+          requestTime.millisecondsSinceEpoch,
+      url: response.requestOptions.uri.toString(),
+      method: response.requestOptions.method,
+      requestBody: response.requestOptions.data ?? "",
+      requestHeaders: response.requestOptions.headers,
+      contentType: response.requestOptions.contentType.toString(),
+      status: response.statusCode ?? 0,
+      responseBody: response.data ?? "",
+      responseHeaders: responseHeaders,
+    );
     return data;
   }
 }
