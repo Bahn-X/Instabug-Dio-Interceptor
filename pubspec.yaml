@@ -17,7 +17,7 @@ dependencies:
   dio: '^4.0.0'
   instabug_flutter: 
     git:
-      url: https://github.com/Danx0/Instabug-Flutter.git
+      url: https://github.com/Bahn-X/Instabug-Flutter.git
       ref: master
 dev_dependencies:
   flutter_test:
